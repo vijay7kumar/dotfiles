@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+#     _         _         __        ______
+#    / \  _   _| |_ ___   \ \      / /  _ \
+#   / _ \| | | | __/ _ \   \ \ /\ / /| |_) |
+#  / ___ \ |_| | || (_) |   \ V  V / |  __/
+# /_/   \_\__,_|\__\___/     \_/\_/  |_|
+#
+
+jay_cache_folder="$HOME/.cache/jay/hyprland-dotfiles"
+
+# Notifications
+source "$HOME/.config/jay/scripts/jay-notification-handler"
+APP_NAME="Waypaper"
+NOTIFICATION_ICON="preferences-desktop-wallpaper-symbolic"
+
+sec=$(cat ~/.config/jay/settings/wallpaper-automation)
+_setWallpaperRandomly() {
+    while true; do
+        $HOME/.config/jay/scripts/jay-wallpaper --random
+        echo ":: Next wallpaper in $sec seconds..."
+        sleep $sec
+    done
+}
+
+if [ ! -f $jay_cache_folder/wallpaper-automation ]; then
+    touch $jay_cache_folder/wallpaper-automation
+    echo ":: Start wallpaper automation script"
+    notify_user \
+        --a "${APP_NAME}" \
+        --i "${NOTIFICATION_ICON}" \
+        --m "Wallpaper automation process started.\nWallpaper will be changed every $sec seconds."
+    _setWallpaperRandomly
+else
+    rm $jay_cache_folder/wallpaper-automation
+    notify_user \
+        --a "${APP_NAME}" \
+        --i "${NOTIFICATION_ICON}" \
+        --m "Wallpaper automation process stopped."
+    echo ":: Wallpaper automation script process $wp stopped"
+    wp=$(pgrep -f jay-wallpaper-automation)
+    kill -KILL $wp
+fi

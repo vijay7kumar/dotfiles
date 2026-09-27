@@ -1,0 +1,6 @@
+[Added Associations]
+application/x-zerosize=obsidian.desktop;
+application/pdf=firefox.desktop;
+
+[Default Applications]
+application/pdf=firefox.desktop

@@ -1,0 +1,40 @@
+gui:
+  theme:
+    activeBorderColor:
+      - '#c4a7e7'
+      - bold
+    inactiveBorderColor:
+      - '#6e6a86'
+    searchingActiveBorderColor:
+      - '#f6c177'
+      - bold
+    optionsTextColor:
+      - '#9ccfd8'
+    selectedLineBgColor:
+      - '#26233a'
+    selectedRangeBgColor:
+      - '#26233a'
+    cherryPickedCommitBgColor:
+      - '#26233a'
+    cherryPickedCommitFgColor:
+      - '#c4a7e7'
+    unstagedChangesColor:
+      - '#eb6f92'
+    defaultFgColor:
+      - '#e0def4'
+  nerdFontsVersion: '3'
+  showBottomLine: true
+  showPanelJumps: true
+  mouseEvents: true
+  border: rounded
+  animateExplosion: true
+git:
+  diffRenderers:
+    - colorArg: always
+      command: delta --dark --paging=never
+  autoFetch: true
+  autoRefresh: true
+os:
+  editPreset: nvim
+confirmOnQuit: false
+quitOnTopLevelReturn: true

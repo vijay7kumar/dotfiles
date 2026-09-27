@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=jojo-bizarre
+Description=JoJo's Bizarre Adventure theme
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/jojo-bizarre
+ScriptFile=/usr/share/plymouth/themes/jojo-bizarre/jojo-bizarre.script

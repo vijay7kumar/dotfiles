@@ -1,0 +1,19 @@
+# Ghostty Configuration
+# Ported from Kitty (previous primary terminal)
+
+font-family = JetBrainsMono Nerd Font
+font-size = 12
+
+background-opacity = 0.7
+window-padding-x = 10
+window-padding-y = 10
+
+window-decoration = none
+confirm-close-surface = false
+
+cursor-style = bar
+cursor-style-blink = true
+
+scrollback-limit = 2000
+
+mouse-hide-while-typing = true

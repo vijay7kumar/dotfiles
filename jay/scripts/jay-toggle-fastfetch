@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+if [ -f $HOME/.config/jay/settings/hide-fastfetch ]; then
+    echo ":: Show fastfetch"
+    rm $HOME/.config/jay/settings/hide-fastfetch
+else
+    echo ":: Hide fastfetch"
+    touch $HOME/.config/jay/settings/hide-fastfetch
+fi

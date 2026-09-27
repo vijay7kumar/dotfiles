@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+echo ":: The script will install the ML4W Hyprland Settings app."
+echo ":: Please note: The app requires Flatpak."
+if gum confirm "Do you want to proceed?"; then
+    jay_app="com.jay.hyprlandsettings"
+    jay_app_repo="hyprland-settings"
+    echo ":: Installing $jay_app"
+    bash -c "$(curl -s https://raw.githubusercontent.com/mylinuxforwork/$jay_app_repo/master/setup.sh)"
+fi

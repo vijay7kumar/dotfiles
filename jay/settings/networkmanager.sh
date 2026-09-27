@@ -1,0 +1,1 @@
+$(cat ~/.config/jay/settings/terminal.sh) --class dotfiles-floating -e ~/.config/jay/scripts/jay-network

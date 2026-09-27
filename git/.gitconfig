@@ -1,0 +1,10 @@
+[user]
+	name = Vijay Kumar S
+	email = svijaykumar17072001@gmail.com
+
+[init]
+	defaultBranch = main
+[pull]
+	rebase = true
+[core]
+	editor = nvim

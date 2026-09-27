@@ -1,0 +1,72 @@
+# JoJo Bizarre Adventure theme
+Window.SetBackgroundTopColor (10 / 255, 0 / 255, 21 / 255);
+Window.SetBackgroundBottomColor (10 / 255, 0 / 255, 21 / 255);
+
+# Load frames
+for (i = 1; i <= 12; i++) {
+    frames[i] = Image("animation/" + i + ".png");
+}
+
+sprite = Sprite();
+sprite.SetX(Window.GetWidth() / 2 - frames[1].GetWidth() / 2);
+sprite.SetY(Window.GetHeight() / 2 - frames[1].GetHeight() / 2);
+
+frame_index = 1;
+
+fun refresh_callback () {
+    frame_index++;
+    if (frame_index > 12) {
+        frame_index = 1;
+    }
+    sprite.SetImage(frames[frame_index]);
+}
+
+Plymouth.SetRefreshFunction (refresh_callback);
+
+# Progress Bar
+progress_bar_text = "ゴゴゴゴゴゴゴゴゴゴゴゴゴゴゴゴゴゴゴゴ";
+progress_sprite = Sprite();
+progress_sprite.SetX(Window.GetWidth() * 0.35);
+progress_sprite.SetY(Window.GetHeight() * 0.85);
+
+fun progress_callback (duration, progress) {
+    # progress is between 0.0 and 1.0
+    text_length = Math.Int(progress * 20);
+    if (text_length > 20) text_length = 20;
+    
+    current_text = "";
+    for (i = 0; i < text_length; i++) {
+        current_text = current_text + "ゴ";
+    }
+    
+    # 1, 0.84, 0 is approx golden yellow
+    if (current_text != "") {
+        progress_img = Image.Text(current_text, 1, 0.84, 0);
+        progress_sprite.SetImage(progress_img);
+    }
+}
+
+Plymouth.SetBootProgressFunction(progress_callback);
+
+# Messages
+message_sprite = Sprite();
+message_sprite.SetPosition(Window.GetWidth() * 0.1, Window.GetHeight() * 0.1, 10000);
+
+fun message_callback (text) {
+    message_sprite.SetImage(Image.Text(text, 1, 1, 1));
+}
+Plymouth.SetMessageFunction(message_callback);
+
+# Password Prompt
+password_sprite = Sprite();
+password_sprite.SetPosition(Window.GetWidth() * 0.35, Window.GetHeight() * 0.9, 10000);
+
+fun display_password_callback (prompt, bullets) {
+    password_sprite.SetImage(Image.Text(prompt + bullets, 1, 0.84, 0));
+}
+Plymouth.SetDisplayPasswordFunction(display_password_callback);
+
+fun display_normal_callback () {
+    password_sprite.SetImage(null);
+}
+Plymouth.SetDisplayNormalFunction(display_normal_callback);
