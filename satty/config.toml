@@ -1,0 +1,19 @@
+[general]
+fullscreen = false
+floating-hack = true
+resize = { mode = "smart" }
+initial-tool = "brush"
+copy-command = "wl-copy"
+annotation-size-factor = 1.5
+corner-roundness = 12
+output-filename = "~/Pictures/Screenshots/satty-%Y%m%d-%H%M%S.png"
+save-after-copy = true
+early-exit = ["all"]                                  # close after copy/save
+actions-on-enter = ["save-to-clipboard", "exit"]      # Enter = copy (+save) and close
+actions-on-escape = ["exit"]                          # Esc = close without saving
+actions-on-right-click = []
+default-hide-toolbars = false
+
+[font]
+family = "Fira Sans"
+style = "Bold"

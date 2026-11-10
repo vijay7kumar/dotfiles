@@ -1,454 +1,325 @@
 #!/usr/bin/env bash
 #  ╔══════════════════════════════════════════════════════════╗
 #  ║           Vijay's Arch Linux Dotfiles Installer          ║
-#  ║          Hyprland • Zsh • Neovim • Ghostty • Tmux       ║
+#  ║          Hyprland • Zsh • Bash • Neovim • Tmux           ║
 #  ╚══════════════════════════════════════════════════════════╝
-
+#
+#  ./install.sh                  interactive menu
+#  ./install.sh shell            zsh + bash + starship (deps + configs + zinit + chsh)
+#  ./install.sh shell tmux editors   any mix of groups/steps
+#  ./install.sh all              everything (full machine restore)
+#  ./install.sh --list           show groups and what each links
+#  ./install.sh --dry-run shell  show what would happen, change nothing
+#  ./install.sh --no-pkgs shell  only link configs, don't install packages
+#
+#  Groups (from manifest.txt): shell terminal tmux editors dev hyprland theme misc
+#  Steps:  packages  services  dev-tools  boot
 set -euo pipefail
 
-# ─── Colors ──────────────────────────────────────────────────
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-CYAN='\033[0;36m'
-BOLD='\033[1m'
-NC='\033[0m'
+RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'
+BLUE='\033[0;34m'; CYAN='\033[0;36m'; BOLD='\033[1m'; NC='\033[0m'
 
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+MANIFEST="$DOTFILES_DIR/manifest.txt"
 BACKUP_DIR="$HOME/.dotfiles-backup/$(date +%Y%m%d_%H%M%S)"
+DRY_RUN=0
+NO_PKGS=0
 
-# ─── Helper Functions ────────────────────────────────────────
 info()    { echo -e "${BLUE}[INFO]${NC} $1"; }
 success() { echo -e "${GREEN}[✓]${NC} $1"; }
 warn()    { echo -e "${YELLOW}[!]${NC} $1"; }
 error()   { echo -e "${RED}[✗]${NC} $1"; }
+run()     { if (( DRY_RUN )); then echo -e "  ${CYAN}would run:${NC} $*"; else "$@"; fi; }
 
 ask() {
-    local prompt="$1"
     local response
-    echo -en "${CYAN}[?]${NC} ${prompt} [Y/n] "
+    echo -en "${CYAN}[?]${NC} $1 [Y/n] "
     read -r response
     [[ -z "$response" || "$response" =~ ^[Yy] ]]
 }
+
+CFG_GROUPS=(shell terminal tmux editors dev hyprland theme misc)
+STEPS=(packages services dev-tools boot)
+
+declare -A DESC=(
+    [shell]="Zsh (zinit+fzf-tab), Bash (modular ~/.config/bashrc), Starship, env files"
+    [terminal]="Ghostty, Kitty, Fastfetch (+themes), Btop"
+    [tmux]="tmux.conf + TPM plugins + tmux-sessionizer"
+    [editors]="Neovim (lazy.nvim), Zed, VS Code settings, gdbinit"
+    [dev]="gitconfig, npmrc, Lazygit, Lazydocker, OpenCode"
+    [hyprland]="Hyprland, Waybar, Rofi, Walker, SwayNC, Wlogout, Quickshell, Matugen, nwg-dock, Jay/ML4W, wallpapers"
+    [theme]="GTK3/4, Qt6ct, nwg-look, xsettingsd"
+    [misc]="Fcitx5, mimeapps, XDG user dirs, pavucontrol, Chromium/Edge Wayland flags, Spotify theme"
+    [packages]="All pacman + AUR packages (packages.txt / packages-aur.txt)"
+    [services]="Enable systemd services + SDDM theme"
+    [dev-tools]="npm globals, Rust, Bun, VS Code extensions (scripts/setup-dev-tools.sh)"
+    [boot]="JoJo GRUB + Plymouth themes (sudo)"
+)
+
+# Minimal packages each group needs, so `./install.sh shell` works on a bare Arch box
+declare -A GROUP_PKGS=(
+    [shell]="zsh bash bash-completion starship fzf eza bat zoxide fastfetch git"
+    [terminal]="ghostty kitty fastfetch btop"
+    [tmux]="tmux git fzf"
+    [editors]="neovim ripgrep fd git"
+    [dev]="git git-delta lazygit npm"
+    [hyprland]="hyprland hypridle hyprlock waybar rofi swaync wlogout matugen awww swayosd satty wf-recorder grim slurp grimblast-git"
+    [theme]="nwg-look qt6ct xsettingsd"
+    [misc]="fcitx5 fcitx5-configtool xdg-user-dirs pavucontrol"
+)
 
 banner() {
     echo -e "${BOLD}${CYAN}"
     echo '    ╔═══════════════════════════════════════════════╗'
     echo '    ║     🏔️  Vijay Arch Dotfiles Installer  🏔️     ║'
-    echo '    ║         Hyprland • Zsh • Neovim • Tmux       ║'
+    echo '    ║      Hyprland • Zsh • Bash • Neovim • Tmux    ║'
     echo '    ╚═══════════════════════════════════════════════╝'
-    echo -e "${NC}"
-    echo -e "  ${BOLD}Dotfiles dir:${NC} $DOTFILES_DIR"
-    echo -e "  ${BOLD}Backup dir:${NC}   $BACKUP_DIR"
-    echo ""
+    echo -e "${NC}  ${BOLD}Dotfiles:${NC} $DOTFILES_DIR"
+    if (( DRY_RUN )); then echo -e "  ${YELLOW}DRY RUN — nothing will be changed${NC}"; fi
+    echo
 }
 
-# ─── Backup existing file before symlinking ──────────────────
-backup_and_link() {
-    local src="$1"
-    local dest="$2"
-
-    # Create parent directory
-    mkdir -p "$(dirname "$dest")"
-
-    # Backup existing file/dir
-    if [[ -e "$dest" || -L "$dest" ]]; then
-        mkdir -p "$BACKUP_DIR"
-        local backup_path="$BACKUP_DIR/$(basename "$dest")"
-        warn "Backing up existing $(basename "$dest") → $backup_path"
-        mv "$dest" "$backup_path"
-    fi
-
-    ln -sf "$src" "$dest"
-    success "Linked $(basename "$dest")"
+# ─── Packages ────────────────────────────────────────────────
+ensure_yay() {
+    command -v yay &>/dev/null && return
+    warn "yay not found — installing it"
+    run sudo pacman -S --needed --noconfirm git base-devel
+    local tmp; tmp=$(mktemp -d)
+    run git clone https://aur.archlinux.org/yay-bin.git "$tmp/yay-bin"
+    (( DRY_RUN )) || (cd "$tmp/yay-bin" && makepkg -si --noconfirm)
+    rm -rf "$tmp"
 }
 
-# ═══════════════════════════════════════════════════════════
-# STEP 1: Install packages
-# ═══════════════════════════════════════════════════════════
-install_packages() {
-    info "Installing official packages via pacman..."
-
-    if [[ ! -f "$DOTFILES_DIR/packages.txt" ]]; then
-        error "packages.txt not found!"
-        return 1
-    fi
-
-    # Filter out already installed packages
-    local to_install
-    to_install=$(comm -23 \
-        <(sort "$DOTFILES_DIR/packages.txt") \
-        <(pacman -Qqe | sort) \
-    )
-
-    if [[ -n "$to_install" ]]; then
-        local count
-        count=$(echo "$to_install" | wc -l)
-        info "Installing $count official packages..."
-        echo "$to_install" | sudo pacman -S --needed --noconfirm -
-        success "Official packages installed!"
-    else
-        success "All official packages already installed."
-    fi
+# Install a list of packages: repo packages via pacman, the rest via yay
+install_pkgs() {
+    local repo=() aur=() p
+    for p in "$@"; do
+        pacman -Q "$p" &>/dev/null && continue
+        if pacman -Si "$p" &>/dev/null; then repo+=("$p"); else aur+=("$p"); fi
+    done
+    if (( ${#repo[@]} )); then info "pacman: ${repo[*]}"; run sudo pacman -S --needed --noconfirm "${repo[@]}"; fi
+    if (( ${#aur[@]} ));  then ensure_yay; info "yay: ${aur[*]}"; run yay -S --needed --noconfirm "${aur[@]}"; fi
+    (( ${#repo[@]} + ${#aur[@]} )) || success "packages already installed"
 }
 
-install_aur_packages() {
-    info "Installing AUR packages via yay..."
-
-    # Ensure yay is installed
-    if ! command -v yay &>/dev/null; then
-        warn "yay not found. Installing yay first..."
-        local tmpdir
-        tmpdir=$(mktemp -d)
-        git clone https://aur.archlinux.org/yay.git "$tmpdir/yay"
-        (cd "$tmpdir/yay" && makepkg -si --noconfirm)
-        rm -rf "$tmpdir"
-        success "yay installed!"
-    fi
-
-    if [[ ! -f "$DOTFILES_DIR/packages-aur.txt" ]]; then
-        error "packages-aur.txt not found!"
-        return 1
-    fi
-
-    local to_install
-    to_install=$(comm -23 \
-        <(sort "$DOTFILES_DIR/packages-aur.txt") \
-        <(pacman -Qqm | sort) \
-    )
-
-    if [[ -n "$to_install" ]]; then
-        local count
-        count=$(echo "$to_install" | wc -l)
-        info "Installing $count AUR packages..."
-        echo "$to_install" | xargs yay -S --needed --noconfirm
-        success "AUR packages installed!"
-    else
-        success "All AUR packages already installed."
-    fi
+enable_multilib() {
+    if grep -q '^\[multilib\]' /etc/pacman.conf; then return; fi
+    info "Enabling the multilib repo (needed for steam / lib32 packages)"
+    run sudo sed -i '/^#\[multilib\]/,/^#Include/ s/^#//' /etc/pacman.conf
 }
 
-# ═══════════════════════════════════════════════════════════
-# STEP 2: Symlink dotfiles
-# ═══════════════════════════════════════════════════════════
-link_dotfiles() {
-    info "Symlinking dotfiles..."
-
-    # Shell
-    backup_and_link "$DOTFILES_DIR/zsh/.zshrc" "$HOME/.zshrc"
-
-    # Git
-    backup_and_link "$DOTFILES_DIR/git/.gitconfig" "$HOME/.gitconfig"
-
-    # Tmux
-    backup_and_link "$DOTFILES_DIR/tmux/.tmux.conf" "$HOME/.tmux.conf"
-
-    # Neovim
-    backup_and_link "$DOTFILES_DIR/nvim" "$HOME/.config/nvim"
-
-    # Starship
-    backup_and_link "$DOTFILES_DIR/starship/starship.toml" "$HOME/.config/starship.toml"
-
-    # Ghostty
-    backup_and_link "$DOTFILES_DIR/ghostty" "$HOME/.config/ghostty"
-
-    # Kitty
-    backup_and_link "$DOTFILES_DIR/kitty" "$HOME/.config/kitty"
-
-    # Fastfetch
-    backup_and_link "$DOTFILES_DIR/fastfetch" "$HOME/.config/fastfetch"
-
-    # GTK
-    backup_and_link "$DOTFILES_DIR/gtk-3.0" "$HOME/.config/gtk-3.0"
-    backup_and_link "$DOTFILES_DIR/gtk-4.0" "$HOME/.config/gtk-4.0"
-
-    # Hyprland
-    backup_and_link "$DOTFILES_DIR/hypr" "$HOME/.config/hypr"
-
-    # Rofi
-    backup_and_link "$DOTFILES_DIR/rofi" "$HOME/.config/rofi"
-
-    # Waybar
-    backup_and_link "$DOTFILES_DIR/waybar" "$HOME/.config/waybar"
-
-    # SwayNC
-    backup_and_link "$DOTFILES_DIR/swaync" "$HOME/.config/swaync"
-
-    # Wlogout
-    backup_and_link "$DOTFILES_DIR/wlogout" "$HOME/.config/wlogout"
-
-    # Btop
-    backup_and_link "$DOTFILES_DIR/btop" "$HOME/.config/btop"
-
-    # Zed Editor
-    backup_and_link "$DOTFILES_DIR/zed/settings.json" "$HOME/.config/zed/settings.json"
-
-    # Lazygit
-    backup_and_link "$DOTFILES_DIR/lazygit/config.yml" "$HOME/.config/lazygit/config.yml"
-
-    # Lazydocker
-    backup_and_link "$DOTFILES_DIR/lazydocker/config.yml" "$HOME/.config/lazydocker/config.yml"
-
-    # VS Code
-    backup_and_link "$DOTFILES_DIR/vscode/settings.json" "$HOME/.config/Code/User/settings.json"
-
-    # Qt6ct
-    backup_and_link "$DOTFILES_DIR/qt6ct" "$HOME/.config/qt6ct"
-
-    # xsettingsd
-    backup_and_link "$DOTFILES_DIR/xsettingsd/xsettingsd.conf" "$HOME/.config/xsettingsd/xsettingsd.conf"
-
-    # nwg-dock-hyprland
-    backup_and_link "$DOTFILES_DIR/nwg-dock-hyprland" "$HOME/.config/nwg-dock-hyprland"
-
-    # Waypaper
-    backup_and_link "$DOTFILES_DIR/waypaper/config.ini" "$HOME/.config/waypaper/config.ini"
-
-    # OpenCode
-    backup_and_link "$DOTFILES_DIR/opencode/opencode.jsonc" "$HOME/.config/opencode/opencode.jsonc"
-
-    # Browser flags (Wayland support)
-    backup_and_link "$DOTFILES_DIR/chromium-flags.conf" "$HOME/.config/chromium-flags.conf"
-    backup_and_link "$DOTFILES_DIR/edge-flags.conf" "$HOME/.config/edge-flags.conf"
-
-    # Bash profile
-    backup_and_link "$DOTFILES_DIR/.bash_profile" "$HOME/.bash_profile"
-
-    # Jay framework (ML4W dotfiles engine)
-    backup_and_link "$DOTFILES_DIR/jay" "$HOME/.config/jay"
-
-    # Quickshell (Wayland shell widgets)
-    backup_and_link "$DOTFILES_DIR/quickshell" "$HOME/.config/quickshell"
-
-    # Matugen (material color generation)
-    backup_and_link "$DOTFILES_DIR/matugen" "$HOME/.config/matugen"
-
-    # Environment & Shell dotfiles in $HOME
-    backup_and_link "$DOTFILES_DIR/.zshenv" "$HOME/.zshenv"
-    backup_and_link "$DOTFILES_DIR/.profile" "$HOME/.profile"
-    backup_and_link "$DOTFILES_DIR/.npmrc" "$HOME/.npmrc"
-    [[ -f "$DOTFILES_DIR/.gdbinit" ]] && backup_and_link "$DOTFILES_DIR/.gdbinit" "$HOME/.gdbinit"
-
-    # Modular Bash config
-    backup_and_link "$DOTFILES_DIR/bashrc" "$HOME/.config/bashrc"
-
-    # Desktop utilities & Input method
-    backup_and_link "$DOTFILES_DIR/fcitx5" "$HOME/.config/fcitx5"
-    backup_and_link "$DOTFILES_DIR/nwg-displays" "$HOME/.config/nwg-displays"
-    backup_and_link "$DOTFILES_DIR/nwg-look" "$HOME/.config/nwg-look"
-    backup_and_link "$DOTFILES_DIR/sidepad" "$HOME/.config/sidepad"
-    backup_and_link "$DOTFILES_DIR/jay-dotfiles-settings" "$HOME/.config/jay-dotfiles-settings"
-    backup_and_link "$DOTFILES_DIR/walker" "$HOME/.config/walker"
-
-    # XDG MIME and directories
-    backup_and_link "$DOTFILES_DIR/mimeapps.list" "$HOME/.config/mimeapps.list"
-    backup_and_link "$DOTFILES_DIR/user-dirs.dirs" "$HOME/.config/user-dirs.dirs"
-    backup_and_link "$DOTFILES_DIR/user-dirs.locale" "$HOME/.config/user-dirs.locale"
-    [[ -f "$DOTFILES_DIR/pavucontrol.ini" ]] && backup_and_link "$DOTFILES_DIR/pavucontrol.ini" "$HOME/.config/pavucontrol.ini"
-
-    # Wallpapers
-    mkdir -p "$HOME/Pictures"
-    backup_and_link "$DOTFILES_DIR/wallpapers" "$HOME/Pictures/Wallpapers"
-
-    # Helper scripts
-    mkdir -p "$HOME/.local/bin"
-    backup_and_link "$DOTFILES_DIR/scripts/tmux-sessionizer" "$HOME/.local/bin/tmux-sessionizer"
-    backup_and_link "$DOTFILES_DIR/scripts/jay-dotfiles-installer" "$HOME/.local/bin/jay-dotfiles-installer"
-    backup_and_link "$DOTFILES_DIR/scripts/jay-dotfiles-settings" "$HOME/.local/bin/jay-dotfiles-settings"
-    chmod +x "$HOME/.local/bin/"*
-
-    success "All dotfiles symlinked!"
+# Drop GPU packages for hardware this PC doesn't have
+filter_hardware() {
+    local gpus; gpus=$(lspci 2>/dev/null | grep -iE 'vga|3d|display')
+    local p
+    while read -r p; do
+        case $p in
+            *nvidia*)        grep -qi nvidia <<< "$gpus" || { warn "skip $p (no NVIDIA GPU)"; continue; } ;;
+            *vulkan-intel*|intel-media-driver)
+                             grep -qi intel  <<< "$gpus" || { warn "skip $p (no Intel GPU)"; continue; } ;;
+        esac
+        echo "$p"
+    done
 }
 
-# ═══════════════════════════════════════════════════════════
-# STEP 3: Enable systemd services
-# ═══════════════════════════════════════════════════════════
+install_all_packages() {
+    info "Installing every package from packages.txt + packages-aur.txt"
+    enable_multilib
+    run sudo pacman -Syu --noconfirm
+    mapfile -t native < <(grep -v '^\s*#' "$DOTFILES_DIR/packages.txt" | grep . | filter_hardware)
+    if ! run sudo pacman -S --needed --noconfirm "${native[@]}"; then
+        warn "Bulk install failed — retrying one by one so one bad package can't block the rest"
+        local p failed=()
+        for p in "${native[@]}"; do sudo pacman -S --needed --noconfirm "$p" &>/dev/null || failed+=("$p"); done
+        (( ${#failed[@]} )) && error "Could not install: ${failed[*]}"
+    fi
+    ensure_yay
+    mapfile -t aur < <(grep -v '^\s*#' "$DOTFILES_DIR/packages-aur.txt" | grep . | grep -vx yay | filter_hardware)
+    if (( ${#aur[@]} )); then
+        run yay -S --needed --noconfirm "${aur[@]}" || warn "Some AUR packages failed — rerun: ./install.sh packages"
+    fi
+    success "Packages installed"
+}
+
+# ─── Linking ─────────────────────────────────────────────────
+link_one() {
+    local src="$DOTFILES_DIR/$1" dest="$HOME/$2"
+    [[ -e $src ]] || { warn "not in repo, skipping: $1"; return; }
+    if [[ -L $dest && $(readlink "$dest") == "$src" ]]; then success "~/$2 (already linked)"; return; fi
+    if [[ -e $dest || -L $dest ]]; then
+        local bk="$BACKUP_DIR/$2"
+        run mkdir -p "$(dirname "$bk")"
+        run mv "$dest" "$bk"
+        warn "backed up ~/$2 → $bk"
+    fi
+    run mkdir -p "$(dirname "$dest")"
+    run ln -s "$src" "$dest"
+    success "~/$2 → $1"
+}
+
+link_group() {
+    local group=$1 g r t
+    info "Linking group: ${BOLD}$group${NC}"
+    while read -r g r t; do
+        [[ -z $g || $g == \#* || $g != "$group" ]] && continue
+        link_one "$r" "$t"
+    done < "$MANIFEST"
+}
+
+# ─── Group post-setup ────────────────────────────────────────
+post_shell() {
+    local zinit="${XDG_DATA_HOME:-$HOME/.local/share}/zinit/zinit.git"
+    if [[ ! -d $zinit ]]; then
+        info "Installing Zinit"
+        run mkdir -p "$(dirname "$zinit")"
+        run git clone https://github.com/zdharma-continuum/zinit.git "$zinit"
+    fi
+    if [[ $(getent passwd "$USER" | cut -d: -f7) != */zsh ]]; then
+        if ask "Make zsh your default shell?"; then run chsh -s "$(command -v zsh)"; fi
+    fi
+    success "Shell ready — open a new terminal (zinit installs plugins on first start)"
+}
+
+post_tmux() {
+    if [[ ! -d $HOME/.tmux/plugins/tpm ]]; then
+        info "Installing TPM"
+        run git clone https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm"
+    fi
+    [[ -x $HOME/.tmux/plugins/tpm/bin/install_plugins ]] && run "$HOME/.tmux/plugins/tpm/bin/install_plugins" >/dev/null || true
+    run chmod +x "$DOTFILES_DIR/scripts/tmux-sessionizer"
+    success "tmux ready"
+}
+
+post_dev() {
+    run mkdir -p "$HOME/.npm-global"
+}
+
+post_hyprland() {
+    run chmod +x "$DOTFILES_DIR"/scripts/jay-dotfiles-* "$DOTFILES_DIR"/hypr/scripts/*.sh 2>/dev/null || true
+}
+
+install_group() {
+    local group=$1
+    echo; echo -e "${BOLD}━━━ $group ━━━${NC}  ${DESC[$group]}"
+    read -ra pkgs <<< "${GROUP_PKGS[$group]:-}"
+    if (( ${#pkgs[@]} && ! NO_PKGS )); then install_pkgs "${pkgs[@]}"; fi
+    link_group "$group"
+    declare -F "post_$group" >/dev/null && "post_$group"
+    return 0
+}
+
+# ─── Steps ───────────────────────────────────────────────────
 enable_services() {
-    info "Enabling systemd services..."
+    info "Enabling systemd services"
+    local svc
+    # PostgreSQL won't start until its data dir is initialised
+    if pacman -Q postgresql &>/dev/null && [[ ! -f /var/lib/postgres/data/PG_VERSION ]]; then
+        info "Initialising PostgreSQL data directory"
+        run sudo -u postgres initdb -D /var/lib/postgres/data
+    fi
+    # Use docker without sudo
+    if pacman -Q docker &>/dev/null && ! id -nG "$USER" | grep -qw docker; then
+        run sudo usermod -aG docker "$USER" && success "added $USER to docker group (re-login)"
+    fi
+    for svc in bluetooth docker.socket NetworkManager ntpd postgresql sddm; do   # docker.socket = start Docker on first use
+        [[ $svc == *.* ]] || svc=$svc.service; systemctl list-unit-files "$svc" &>/dev/null || { warn "$svc not installed"; continue; }
+        systemctl is-enabled "$svc" &>/dev/null && { success "$svc already enabled"; continue; }
+        run sudo systemctl enable "$svc" && success "enabled $svc"
+    done
+    if [[ -f $DOTFILES_DIR/system/sddm.conf ]]; then
+        run sudo cp "$DOTFILES_DIR/system/sddm.conf" /etc/sddm.conf && success "SDDM config installed"
+    fi
+}
 
-    local services=(
-        "bluetooth.service"
-        "docker.service"
-        "NetworkManager.service"
-        "NetworkManager-dispatcher.service"
-        "NetworkManager-wait-online.service"
-        "ntpd.service"
-        "postgresql.service"
-        "sddm.service"
-    )
+setup_dev_tools() { run bash "$DOTFILES_DIR/scripts/setup-dev-tools.sh"; }
+install_boot() {
+    if [[ ! -d /boot/grub ]] || ! command -v grub-mkconfig &>/dev/null; then
+        warn "GRUB not found (systemd-boot?) — skipping boot themes"; return
+    fi
+    run sudo bash "$DOTFILES_DIR/boot/grub/install-jojo-boot.sh"
+}
 
-    for svc in "${services[@]}"; do
-        if systemctl is-enabled "$svc" &>/dev/null; then
-            success "$svc already enabled"
-        else
-            sudo systemctl enable "$svc"
-            success "Enabled $svc"
-        fi
+do_item() {
+    case $1 in
+        packages)  install_all_packages ;;
+        services)  enable_services ;;
+        dev-tools) setup_dev_tools ;;
+        boot)      install_boot ;;
+        *)         if [[ -n ${DESC[$1]:-} ]]; then install_group "$1"; else error "unknown: $1 (try --list)"; exit 1; fi ;;
+    esac
+}
+
+list_items() {
+    local g
+    echo -e "${BOLD}Config groups${NC}"
+    for g in "${CFG_GROUPS[@]}"; do
+        printf "  ${GREEN}%-10s${NC} %s\n" "$g" "${DESC[$g]}"
+        awk -v g="$g" '$1==g {printf "               %-28s → ~/%s\n", $2, $3}' "$MANIFEST"
+    done
+    echo -e "\n${BOLD}System steps${NC}"
+    for g in "${STEPS[@]}"; do printf "  ${GREEN}%-10s${NC} %s\n" "$g" "${DESC[$g]}"; done
+}
+
+menu() {
+    local all=("${CFG_GROUPS[@]}" "${STEPS[@]}") i choice
+    echo -e "${BOLD}What do you want to install?${NC}"
+    for i in "${!all[@]}"; do printf "  ${CYAN}%2d)${NC} %-10s %s\n" $((i+1)) "${all[$i]}" "${DESC[${all[$i]}]}"; done
+    echo -e "  ${CYAN} a)${NC} everything"
+    echo -en "\nPick numbers separated by spaces (e.g. ${BOLD}1 3${NC}): "
+    read -ra choice
+    SELECTED=()
+    for i in "${choice[@]}"; do
+        if [[ $i == a ]]; then SELECTED=(packages "${CFG_GROUPS[@]}" services dev-tools boot); return; fi
+        [[ $i =~ ^[0-9]+$ ]] && (( i >= 1 && i <= ${#all[@]} )) && SELECTED+=("${all[$((i-1))]}")
+    done
+}
+
+preflight() {
+    [[ $EUID -eq 0 ]] && { error "Run as your normal user, not root (sudo is used when needed)"; exit 1; }
+    (( DRY_RUN )) && return
+    [[ ${1:-1} == 0 ]] && return
+    command -v sudo &>/dev/null || { error "sudo is missing: as root run  pacman -S sudo  and add yourself to wheel"; exit 1; }
+    sudo -v || { error "sudo failed — is your user in the wheel group?"; exit 1; }
+    # keep sudo alive for long installs
+    while true; do sudo -n true; sleep 50; kill -0 "$$" || exit; done 2>/dev/null &
+    ping -c1 -W3 archlinux.org &>/dev/null || warn "No internet? Package steps will fail (connect with nmtui / iwctl)"
+}
+
+main() {
+    local args=()
+    for a in "$@"; do
+        case $a in
+            --dry-run|-n) DRY_RUN=1 ;;
+            --no-pkgs)    NO_PKGS=1 ;;
+            --list|-l)    list_items; exit 0 ;;
+            --help|-h)    sed -n '6,16p' "${BASH_SOURCE[0]}" | sed 's/^#  \{0,1\}//'; exit 0 ;;
+            all|--all)    args+=(packages "${CFG_GROUPS[@]}" services dev-tools boot) ;;
+            --dotfiles)   args+=("${CFG_GROUPS[@]}") ;;   # old flag: link everything
+            --dev)        args+=(dev-tools) ;;            # old flag: dev tools script
+            --*)          args+=("${a#--}") ;;            # --packages, --services, --boot
+            *)            args+=("$a") ;;
+        esac
     done
 
-    # Configure SDDM Theme
-    if [[ -f "$DOTFILES_DIR/system/sddm.conf" ]]; then
-        info "Configuring SDDM Astronaut Theme..."
-        sudo cp "$DOTFILES_DIR/system/sddm.conf" /etc/sddm.conf
-        success "SDDM theme configured!"
-    fi
-
-    success "All services configured!"
-}
-
-# ═══════════════════════════════════════════════════════════
-# STEP 4: Post-install setup
-# ═══════════════════════════════════════════════════════════
-post_install() {
-    info "Running post-install setup..."
-
-    # Install Tmux Plugin Manager
-    if [[ ! -d "$HOME/.tmux/plugins/tpm" ]]; then
-        info "Installing Tmux Plugin Manager (TPM)..."
-        git clone https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm"
-        success "TPM installed! Run prefix + I inside tmux to install plugins."
-    else
-        success "TPM already installed."
-    fi
-
-    # Install Zinit (Zsh plugin manager)
-    local zinit_dir="${XDG_DATA_HOME:-$HOME/.local/share}/zinit/zinit.git"
-    if [[ ! -d "$zinit_dir" ]]; then
-        info "Installing Zinit..."
-        mkdir -p "$(dirname "$zinit_dir")"
-        git clone https://github.com/zdharma-continuum/zinit.git "$zinit_dir"
-        success "Zinit installed!"
-    else
-        success "Zinit already installed."
-    fi
-
-    # Set Zsh as default shell
-    if [[ "$SHELL" != "/usr/bin/zsh" ]]; then
-        info "Setting Zsh as default shell..."
-        chsh -s /usr/bin/zsh
-        success "Default shell set to Zsh. Log out and back in to apply."
-    else
-        success "Zsh is already the default shell."
-    fi
-
-    # Create npm global directory
-    mkdir -p "$HOME/.npm-global"
-    npm config set prefix "$HOME/.npm-global" 2>/dev/null || true
-
-    success "Post-install setup complete!"
-}
-
-# ═══════════════════════════════════════════════════════════
-# STEP 5: Dev tools setup
-# ═══════════════════════════════════════════════════════════
-setup_dev_tools() {
-    info "Setting up development tools..."
-    if [[ -f "$DOTFILES_DIR/scripts/setup-dev-tools.sh" ]]; then
-        bash "$DOTFILES_DIR/scripts/setup-dev-tools.sh"
-    else
-        error "scripts/setup-dev-tools.sh not found!"
-    fi
-}
-
-# ═══════════════════════════════════════════════════════════
-# STEP 6: Boot themes setup (JoJo Grub + Plymouth)
-# ═══════════════════════════════════════════════════════════
-install_boot_themes() {
-    info "Setting up JoJo's Bizarre Adventure Boot Themes..."
-    if [[ -f "$DOTFILES_DIR/boot/grub/install-jojo-boot.sh" ]]; then
-        sudo bash "$DOTFILES_DIR/boot/grub/install-jojo-boot.sh"
-        success "Boot themes installed!"
-    else
-        warn "boot/grub/install-jojo-boot.sh not found."
-    fi
-}
-
-# ═══════════════════════════════════════════════════════════
-# Main
-# ═══════════════════════════════════════════════════════════
-main() {
     banner
+    [[ -f /etc/arch-release ]] || warn "This doesn't look like Arch Linux — package steps may fail."
 
-    case "${1:-}" in
-        --packages)
-            install_packages
-            install_aur_packages
-            ;;
-        --dotfiles)
-            link_dotfiles
-            ;;
-        --services)
-            enable_services
-            ;;
-        --dev)
-            setup_dev_tools
-            ;;
-        --boot)
-            install_boot_themes
-            ;;
-        --all)
-            install_packages
-            install_aur_packages
-            link_dotfiles
-            enable_services
-            post_install
-            setup_dev_tools
-            install_boot_themes
-            ;;
-        *)
-            # Interactive mode
-            if ask "Install official packages (pacman)?"; then
-                install_packages
-            fi
-            echo ""
+    if (( ${#args[@]} == 0 )); then menu; args=("${SELECTED[@]}"); fi
+    (( ${#args[@]} )) || { warn "nothing selected"; exit 0; }
 
-            if ask "Install AUR packages (yay)?"; then
-                install_aur_packages
-            fi
-            echo ""
+    # sudo is only needed for packages / services / boot / chsh
+    local need_sudo=0 i
+    for i in "${args[@]}"; do
+        [[ $i == packages || $i == services || $i == boot || $i == dev-tools ]] && need_sudo=1
+        [[ -n ${GROUP_PKGS[$i]:-} ]] && (( ! NO_PKGS )) && need_sudo=1
+    done
+    preflight "$need_sudo"
 
-            if ask "Symlink dotfiles? (existing files will be backed up)"; then
-                link_dotfiles
-            fi
-            echo ""
+    local item; for item in "${args[@]}"; do do_item "$item"; done
 
-            if ask "Enable systemd services?"; then
-                enable_services
-            fi
-            echo ""
-
-            if ask "Run post-install setup (TPM, Zinit, Zsh default)?"; then
-                post_install
-            fi
-            echo ""
-
-            if ask "Setup dev tools (npm globals, Rust, Bun, VS Code extensions)?"; then
-                setup_dev_tools
-            fi
-            echo ""
-
-            if ask "Install JoJo Grub & Plymouth boot themes? (requires sudo)"; then
-                install_boot_themes
-            fi
-            ;;
-    esac
-
-    echo ""
-    echo -e "${BOLD}${GREEN}╔═══════════════════════════════════════════════╗${NC}"
-    echo -e "${BOLD}${GREEN}║          🎉 Installation Complete! 🎉         ║${NC}"
-    echo -e "${BOLD}${GREEN}╚═══════════════════════════════════════════════╝${NC}"
-    echo ""
-    echo -e "  ${BOLD}Next steps:${NC}"
-    echo -e "    1. Log out and log back in for shell changes"
-    echo -e "    2. Open tmux and press ${CYAN}prefix + I${NC} to install plugins"
-    echo -e "    3. Open neovim — lazy.nvim will auto-install plugins"
-    echo -e "    4. Run ${CYAN}:Mason${NC} in neovim to install LSP servers"
-    echo -e "    5. Run ${CYAN}./install.sh --dev${NC} to setup dev tools separately"
-    echo ""
-    if [[ -d "$BACKUP_DIR" ]]; then
-        echo -e "  ${YELLOW}Backups saved to:${NC} $BACKUP_DIR"
-    fi
+    echo -e "\n${BOLD}${GREEN}🎉 Done:${NC} ${args[*]}"
+    [[ -d $BACKUP_DIR ]] && echo -e "${YELLOW}Old files backed up to:${NC} $BACKUP_DIR"
+    echo "Tips: open nvim to let lazy.nvim install plugins · tmux: prefix + I · log out to apply shell change"
 }
 
 main "$@"

@@ -4,3 +4,14 @@
 @import '../../../../../.config/waybar/colors.css';
 
 @import '../../jay-glass/style.css';
+/* Screen recording indicator */
+#custom-recording.recording {
+    color: #ffffff;
+    background: #e5484d;
+    border-radius: 999px;
+    padding: 0 12px;
+    margin: 4px 6px;
+    font-weight: bold;
+    animation: rec-blink 1.2s ease-in-out infinite alternate;
+}
+@keyframes rec-blink { from { opacity: 1; } to { opacity: 0.55; } }

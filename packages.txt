@@ -60,13 +60,13 @@ hyprshutdown
 hyprsunset
 imagemagick
 inotify-tools
+jre-openjdk
 jre21-openjdk
 keepass
 kvantum-qt5
 lazydocker
 lazygit
 lib32-gamemode
-lib32-nvidia-utils
 lib32-vulkan-intel
 libheif
 libvips
@@ -90,8 +90,6 @@ nodejs
 noto-fonts
 npm
 ntp
-nvidia-open
-nvidia-utils
 nwg-displays
 nwg-dock-hyprland
 nwg-look
@@ -126,6 +124,7 @@ rofi-emoji
 rsync
 ruby
 rust
+satty
 sddm
 slurp
 soundfont-fluid
@@ -136,6 +135,7 @@ strace
 stylua
 sudo
 swaync
+swayosd
 tesseract
 tesseract-data-eng
 tmux
@@ -156,9 +156,11 @@ valkey
 vlc
 vulkan-intel
 waybar
+wf-recorder
 wget
 wl-clipboard
 woff2-font-awesome
+xdelta3
 xdg-desktop-portal-hyprland
 xdg-desktop-portal-wlr
 yad

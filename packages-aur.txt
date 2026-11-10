@@ -9,6 +9,8 @@ pokemon-colorscripts-git
 python-pywalfox
 python-screeninfo
 sddm-astronaut-theme
+spicetify-cli
+spotify
 tlauncher-installer
 ttf-segoe-ui-variable
 visual-studio-code-bin

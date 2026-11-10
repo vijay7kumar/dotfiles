@@ -98,6 +98,14 @@
     "on-scroll-down": "true"
   },
   // Updates Count
+  // Screen recording indicator (click to stop)
+  "custom/recording": {
+    "exec": "~/.config/hypr/scripts/record-status.sh",
+    "return-type": "json",
+    "interval": 1,
+    "signal": 8,
+    "on-click": "~/.config/hypr/scripts/record.sh"
+  },
   "custom/updates": {
     "format": "  {}",
     "escape": true,

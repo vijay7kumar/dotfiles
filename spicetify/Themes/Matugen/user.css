@@ -1,0 +1,7 @@
+/* Matugen theme — rounded, airy */
+.main-rootlist-rootlist, .Root__nav-bar, .Root__main-view, .Root__right-sidebar, .Root__now-playing-bar {
+    border-radius: 14px !important;
+}
+.main-card-card { border-radius: 12px !important; }
+.main-card-card:hover { background-color: var(--spice-highlight) !important; }
+.main-entityHeader-backgroundColor, .main-actionBarBackground-background { background: transparent !important; }

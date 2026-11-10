@@ -1,2 +1,2 @@
-local name = "default.lua"
+local name = "rice.lua"
 load_variant(name,"animations")

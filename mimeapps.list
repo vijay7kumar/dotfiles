@@ -4,3 +4,4 @@ application/pdf=firefox.desktop;
 
 [Default Applications]
 application/pdf=firefox.desktop
+x-scheme-handler/claude-cli=claude-code-url-handler.desktop

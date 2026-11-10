@@ -1,0 +1,77 @@
+# ─────────────────────────────────────────────────────────────
+#  Dotfiles manifest — shared by install.sh and backup.sh
+#  Format:  <group>  <path in repo>  <target relative to $HOME>
+#  Directories and files are both allowed.
+# ─────────────────────────────────────────────────────────────
+
+# ── shell: zsh, bash, prompt, env ────────────────────────────
+shell     zsh/.zshrc                 .zshrc
+shell     .zshenv                    .zshenv
+shell     .profile                   .profile
+shell     .bash_profile              .bash_profile
+shell     bash/.bashrc               .bashrc
+shell     bashrc                     .config/bashrc
+shell     starship/starship.toml     .config/starship.toml
+
+# ── terminal: emulators, fetch, monitors ─────────────────────
+terminal  ghostty                    .config/ghostty
+terminal  kitty                      .config/kitty
+terminal  fastfetch                  .config/fastfetch
+terminal  btop                       .config/btop
+
+# ── tmux ─────────────────────────────────────────────────────
+tmux      tmux/.tmux.conf            .tmux.conf
+tmux      scripts/tmux-sessionizer   .local/bin/tmux-sessionizer
+
+# ── editors ──────────────────────────────────────────────────
+editors   nvim                       .config/nvim
+editors   zed/settings.json          .config/zed/settings.json
+editors   vscode/settings.json       .config/Code/User/settings.json
+editors   .gdbinit                   .gdbinit
+
+# ── dev: git, npm, TUIs, AI ──────────────────────────────────
+dev       git/.gitconfig             .gitconfig
+dev       .npmrc                     .npmrc
+dev       lazygit/config.yml         .config/lazygit/config.yml
+dev       lazydocker/config.yml      .config/lazydocker/config.yml
+dev       opencode/opencode.jsonc    .config/opencode/opencode.jsonc
+
+# ── hyprland: WM + bar, launcher, notifications, widgets ─────
+hyprland  hypr                       .config/hypr
+hyprland  waybar                     .config/waybar
+hyprland  rofi                       .config/rofi
+hyprland  walker                     .config/walker
+hyprland  swaync                     .config/swaync
+hyprland  wlogout                    .config/wlogout
+hyprland  quickshell                 .config/quickshell
+hyprland  matugen                    .config/matugen
+hyprland  nwg-dock-hyprland          .config/nwg-dock-hyprland
+hyprland  nwg-displays               .config/nwg-displays
+hyprland  sidepad                    .config/sidepad
+hyprland  waypaper/config.ini        .config/waypaper/config.ini
+hyprland  jay                        .config/jay
+hyprland  jay-dotfiles-settings      .config/jay-dotfiles-settings
+hyprland  jay-dotfiles-settings-app   .local/share/jay-dotfiles-settings
+hyprland  scripts/jay-dotfiles-installer  .local/bin/jay-dotfiles-installer
+hyprland  scripts/jay-dotfiles-settings   .local/bin/jay-dotfiles-settings
+hyprland  wallpapers                 Pictures/Wallpapers
+hyprland  swayosd                    .config/swayosd
+hyprland  satty                      .config/satty
+
+# ── theme: GTK / Qt / X settings ─────────────────────────────
+theme     gtk-3.0                    .config/gtk-3.0
+theme     gtk-4.0                    .config/gtk-4.0
+theme     qt6ct                      .config/qt6ct
+theme     nwg-look                   .config/nwg-look
+theme     xsettingsd/xsettingsd.conf .config/xsettingsd/xsettingsd.conf
+
+# ── misc: input method, XDG, browser flags ───────────────────
+misc      fcitx5                     .config/fcitx5
+misc      mimeapps.list              .config/mimeapps.list
+misc      user-dirs.dirs             .config/user-dirs.dirs
+misc      user-dirs.locale           .config/user-dirs.locale
+misc      pavucontrol.ini            .config/pavucontrol.ini
+misc      chromium-flags.conf        .config/chromium-flags.conf
+misc      edge-flags.conf            .config/edge-flags.conf
+misc      spicetify/Themes/Matugen   .config/spicetify/Themes/Matugen
+misc      spotify-flags.conf         .config/spotify-flags.conf

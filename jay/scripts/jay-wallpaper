@@ -198,7 +198,14 @@ if [ "$SKIP" = true ]; then
 else
     info "Setting wallpaper: $IMAGE_PATH"
     info "Using wallpaper effect $SETTINGS_TRANSITION_EFFECT"
-    awww img "$IMAGE_PATH" --transition-type $SETTINGS_TRANSITION_EFFECT
+    # Transition: grow/outer start at the mouse cursor (awww's y-axis starts at the bottom)
+    TRANSITION_ARGS=(--transition-type "$SETTINGS_TRANSITION_EFFECT" --transition-fps 60 --transition-duration 1.4)
+    if [[ $SETTINGS_TRANSITION_EFFECT == grow || $SETTINGS_TRANSITION_EFFECT == outer ]]; then
+        read -r CX CY < <(hyprctl cursorpos | tr -d ',')
+        MON_H=$(hyprctl monitors -j | jq '.[] | select(.focused) | .height')
+        [[ -n $CX && -n $MON_H ]] && TRANSITION_ARGS+=(--transition-pos "${CX%.*},$(( MON_H - ${CY%.*} ))")
+    fi
+    awww img "$IMAGE_PATH" "${TRANSITION_ARGS[@]}"
 fi
 
 # Detect Theme
@@ -214,11 +221,14 @@ else
     MATUGEN_BIN="matugen"
 fi
 
+# Colour scheme (scheme-neutral = soft, scheme-tonal-spot = default, scheme-vibrant = loud)
+MATUGEN_SCHEME=$(cat "$HOME/.config/jay/settings/matugen-scheme" 2>/dev/null || echo scheme-tonal-spot)
+
 # Execute matugen
 if [ "$THEME_PREF" -eq 1 ]; then
-    $MATUGEN_BIN image "$IMAGE_PATH" --source-color-index 0 -m "dark"
+    $MATUGEN_BIN image "$IMAGE_PATH" --source-color-index 0 -m "dark" -t "$MATUGEN_SCHEME"
 else
-    $MATUGEN_BIN image "$IMAGE_PATH" --source-color-index 0 -m "light"
+    $MATUGEN_BIN image "$IMAGE_PATH" --source-color-index 0 -m "light" -t "$MATUGEN_SCHEME"
 fi
 info "Matugen updated"
 

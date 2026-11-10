@@ -6,7 +6,7 @@
 # /_/   \_\_|_|_| |_|\___/ \__,_|\__|
 #
 
-hyprctl dispatch workspaceopt allfloat
+exec "$HOME/.config/jay/scripts/jay-toggle-allfloat"  # workspaceopt was removed in Lua mode
 
 # Notifications
 source "$HOME/.config/jay/scripts/jay-notification-handler"

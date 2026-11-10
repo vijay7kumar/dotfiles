@@ -87,5 +87,18 @@ output_path = "~/.config/quickshell/overview/common/Appearance.colors.qml"
 [templates.ohmyposh]
 input_path = '~/.config/matugen/templates/ohmyposh-colors.json'
 output_path = '~/.config/ohmyposh/colors.json'
-post_hook = "jq --slurpfile palette ~/.config/ohmyposh/colors.json '. + $palette[0]' ~/.config/ohmyposh/EDM115-newline.omp.json > /tmp/new_theme.json && mv /tmp/new_theme.json ~/.config/ohmyposh/EDM115-newline.omp.json"
+post_hook = "[ -f ~/.config/ohmyposh/EDM115-newline.omp.json ] && jq --slurpfile palette ~/.config/ohmyposh/colors.json '. + $palette[0]' ~/.config/ohmyposh/EDM115-newline.omp.json > /tmp/new_theme.json && mv /tmp/new_theme.json ~/.config/ohmyposh/EDM115-newline.omp.json"
 
+
+[templates.ghostty]
+input_path = '~/.config/matugen/templates/ghostty-colors'
+output_path = '~/.config/ghostty/colors-matugen'
+
+[templates.swayosd]
+input_path = '~/.config/matugen/templates/swayosd-colors.css'
+output_path = '~/.config/swayosd/colors.css'
+
+[templates.spicetify]
+input_path = '~/.config/matugen/templates/spicetify-color.ini'
+output_path = '~/.config/spicetify/Themes/Matugen/color.ini'
+post_hook = 'command -v spicetify >/dev/null && pgrep -x spotify >/dev/null && spicetify refresh -s >/dev/null 2>&1 &'

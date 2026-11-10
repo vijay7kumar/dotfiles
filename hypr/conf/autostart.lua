@@ -15,6 +15,8 @@ hl.on("hyprland.start", function ()
     hl.exec_cmd("~/.config/hypr/scripts/gtk.sh")
     -- Start swaync
     hl.exec_cmd("swaync")
+    -- Volume/brightness OSD (no-op until swayosd is installed)
+    hl.exec_cmd("command -v swayosd-server && swayosd-server")
     -- Start hypridle
     hl.exec_cmd("hypridle")
     -- Load cliphist history

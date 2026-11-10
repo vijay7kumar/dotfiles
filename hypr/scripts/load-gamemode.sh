@@ -10,14 +10,7 @@
 source "$HOME/.config/jay/scripts/jay-notification-handler"
 
 _loadGameMode() {
-    hyprctl --batch "\
-        keyword animations:enabled 0;\
-        keyword decoration:shadow:enabled 0;\
-        keyword decoration:blur:enabled 0;\
-        keyword general:gaps_in 0;\
-        keyword general:gaps_out 0;\
-        keyword general:border_size 1;\
-        keyword decoration:rounding 0"
+    hyprctl eval "activate_gamemode()"
 }
 
 if [ -f $HOME/.config/jay/settings/gamemode-enabled ]; then
