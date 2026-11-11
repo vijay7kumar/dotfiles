@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# Native-messaging host for the Pywalfox Firefox add-on (path stays valid across Python upgrades)
+exec python3 -m pywalfox start

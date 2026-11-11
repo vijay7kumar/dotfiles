@@ -59,12 +59,12 @@ declare -A DESC=(
 # Minimal packages each group needs, so `./install.sh shell` works on a bare Arch box
 declare -A GROUP_PKGS=(
     [shell]="zsh bash bash-completion starship fzf eza bat zoxide fastfetch git"
-    [terminal]="ghostty kitty fastfetch btop"
+    [terminal]="ghostty kitty fastfetch btop cava cmatrix tty-clock lavat mpd mpc rmpc"
     [tmux]="tmux git fzf"
     [editors]="neovim ripgrep fd git"
     [dev]="git git-delta lazygit npm"
-    [hyprland]="hyprland hypridle hyprlock waybar rofi swaync wlogout matugen awww swayosd satty wf-recorder grim slurp grimblast-git"
-    [theme]="nwg-look qt6ct xsettingsd"
+    [hyprland]="hyprland hypridle hyprlock waybar rofi swaync wlogout matugen awww swayosd satty wf-recorder grim slurp grimblast-git pipewire-pulse"
+    [theme]="nwg-look qt6ct xsettingsd papirus-icon-theme papirus-folders bibata-cursor-theme-bin adobe-source-han-sans-jp-fonts"
     [misc]="fcitx5 fcitx5-configtool xdg-user-dirs pavucontrol"
 )
 
@@ -188,6 +188,11 @@ post_tmux() {
     [[ -x $HOME/.tmux/plugins/tpm/bin/install_plugins ]] && run "$HOME/.tmux/plugins/tpm/bin/install_plugins" >/dev/null || true
     run chmod +x "$DOTFILES_DIR/scripts/tmux-sessionizer"
     success "tmux ready"
+}
+
+post_terminal() {
+    run mkdir -p "$HOME/Music" "$HOME/.local/share/mpd/playlists"
+    run systemctl --user enable mpd.service 2>/dev/null || true
 }
 
 post_dev() {

@@ -1,6 +1,6 @@
 hl.on("hyprland.start", function () 
     -- Load cursor
-    hl.exec_cmd("hyprctl setcursor macOS 24")
+    hl.exec_cmd("hyprctl setcursor Bibata-Modern-Classic 24")
     -- Start listeners
     hl.exec_cmd("~/.config/jay/listeners.sh --startall")
     -- Start polkit daemon

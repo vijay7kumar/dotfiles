@@ -15,3 +15,6 @@
     animation: rec-blink 1.2s ease-in-out infinite alternate;
 }
 @keyframes rec-blink { from { opacity: 1; } to { opacity: 0.55; } }
+
+/* Volume (wireplumber module) */
+#wireplumber.muted { opacity: 0.6; }

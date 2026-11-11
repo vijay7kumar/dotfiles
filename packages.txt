@@ -1,3 +1,4 @@
+adobe-source-han-sans-jp-fonts
 adw-gtk-theme
 alsa-utils
 arm-none-eabi-binutils
@@ -81,6 +82,8 @@ luarocks
 man-db
 matugen
 mgba-qt
+mpc
+mpd
 nautilus
 ncdu
 neovim
@@ -99,8 +102,10 @@ opencode
 os-prober
 otf-font-awesome
 pacman-contrib
+papirus-icon-theme
 pavucontrol
 perl-image-exiftool
+pipewire-pulse
 plymouth
 polkit-gnome
 polkit-kde-agent
@@ -119,6 +124,7 @@ qt6-wayland
 qt6ct
 quickshell
 reflector
+rmpc
 rofi
 rofi-emoji
 rsync

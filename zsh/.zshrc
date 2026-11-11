@@ -141,6 +141,14 @@ alias ...='cd ../..'
 alias ....='cd ../../..'
 
 # Safety nets
+# ─── Rice toys (colours follow the wallpaper via the terminal palette) ───
+alias clock='tty-clock -c -s -B -C 4'          # big centred clock
+alias matrix='cmatrix -ab -C blue'             # falling code
+alias lava='lavat -c blue -R 2 -k cyan'        # lava lamp
+alias pipes='pipes.sh -t 0 -c 4 -c 5 -c 6'     # pipes
+alias bonsai='cbonsai -liv'                    # growing bonsai
+alias music='rmpc'                             # music player (reads ~/Music)
+
 alias rm='rm -i'
 alias cp='cp -i'
 alias mv='mv -i'

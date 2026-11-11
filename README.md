@@ -7,6 +7,23 @@
 ![Neovim](https://img.shields.io/badge/Neovim-57A143?style=for-the-badge&logo=neovim&logoColor=white)
 ![Zsh](https://img.shields.io/badge/Zsh-F15A24?style=for-the-badge&logo=gnu-bash&logoColor=white)
 
+## 🖼️ Showcase
+
+| | |
+|---|---|
+| ![Desktop](screenshots/desktop.png) | ![Clean](screenshots/clean.png) |
+| ![Launcher](screenshots/launcher.png) | ![Notification centre](screenshots/notifications.png) |
+
+Regenerate with `./scripts/showcase.sh` (opens a layout on an empty workspace, captures, cleans up).
+
+## ✨ Highlights
+
+- **One wallpaper drives everything** — matugen recolours Hyprland, Waybar, Rofi, SwayNC, GTK, Ghostty, Starship, btop, Spotify (spicetify), Firefox (pywalfox + start page), the lock screen and the SDDM login screen.
+- **Bar** — floating pills, kanji workspaces (一 二 三 四 五), now-playing, native PipeWire volume, blinking ● REC while recording.
+- **Feel** — 250 ms animations, 2-pass blur, dimmed inactive windows, per-app opacity; tuned for integrated graphics.
+- **Tools** — satty screenshot editor, wf-recorder, swayosd popups, screen shaders (`SUPER+ALT+V`), rmpc music player (`SUPER+ALT+M`), Quickshell overview / sidebar / wallpaper grid.
+- **Reproducible** — `./install.sh all` on a fresh Arch install; `./backup.sh` to sync changes back.
+
 ## 📋 System Overview
 
 | Component | Details |
@@ -22,14 +39,14 @@
 | **Notifications** | SwayNC |
 | **File Manager** | Nautilus + Yazi (TUI) |
 | **Multiplexer** | Tmux (ThePrimeagen-style) |
-| **Display Manager** | SDDM (Astronaut theme) |
+| **Display Manager** | SDDM (follows the current wallpaper + colours) |
 | **Boot Splash** | Plymouth (jojo-bizarre theme) |
 | **Bootloader** | GRUB (jojo-bizarre graphical theme) |
 | **GTK Theme** | adw-gtk3-dark |
-| **Icons** | WhiteSur-dark |
-| **Cursor** | macOS (Apple cursor) |
+| **Icons** | Papirus-Dark (folders recoloured to match the wallpaper) |
+| **Cursor** | Bibata Modern Classic |
 | **Input Method** | Fcitx5 (fcitx5-bamboo) |
-| **Fonts** | JetBrainsMono Nerd Font, FiraCode Nerd Font, Fira Sans |
+| **Fonts** | JetBrainsMono Nerd Font, FiraCode Nerd Font, Fira Sans, Source Han Sans JP |
 | **AUR Helper** | yay |
 | **Containers** | Docker + Docker Compose |
 | **Databases** | PostgreSQL, MongoDB, Valkey |
@@ -127,6 +144,7 @@ initialises PostgreSQL, adds you to the `docker` group, offers zsh as default sh
 
 **After first login:** press `SUPER+SHIFT+W` once to pick a wallpaper (generates colours + lockscreen images),
 open Spotify once and log in, then run `~/.config/hypr/scripts/spicetify-setup.sh`.
+For a login screen that follows your wallpaper (instead of the stock astronaut), run `~/.config/hypr/scripts/sddm-setup.sh` once.
 
 ## 🚀 Quick Install
 

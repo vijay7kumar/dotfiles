@@ -1,9 +1,12 @@
 apple_cursor
+bibata-cursor-theme-bin
 cbonsai
 debtap
 grimblast-git
 hyprsysteminfo
+lavat
 mongodb-bin
+papirus-folders
 pipes.sh
 pokemon-colorscripts-git
 python-pywalfox
@@ -13,6 +16,7 @@ spicetify-cli
 spotify
 tlauncher-installer
 ttf-segoe-ui-variable
+tty-clock
 visual-studio-code-bin
 whitesur-icon-theme
 wlogout

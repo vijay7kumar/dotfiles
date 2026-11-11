@@ -18,6 +18,8 @@ terminal  ghostty                    .config/ghostty
 terminal  kitty                      .config/kitty
 terminal  fastfetch                  .config/fastfetch
 terminal  btop                       .config/btop
+terminal  mpd/mpd.conf               .config/mpd/mpd.conf
+terminal  rmpc/config.ron            .config/rmpc/config.ron
 
 # ── tmux ─────────────────────────────────────────────────────
 tmux      tmux/.tmux.conf            .tmux.conf
@@ -75,3 +77,5 @@ misc      chromium-flags.conf        .config/chromium-flags.conf
 misc      edge-flags.conf            .config/edge-flags.conf
 misc      spicetify/Themes/Matugen   .config/spicetify/Themes/Matugen
 misc      spotify-flags.conf         .config/spotify-flags.conf
+misc      startpage/index.html       .config/startpage/index.html
+misc      scripts/pywalfox-host      .local/bin/pywalfox-host

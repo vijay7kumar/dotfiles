@@ -102,3 +102,15 @@ output_path = '~/.config/swayosd/colors.css'
 input_path = '~/.config/matugen/templates/spicetify-color.ini'
 output_path = '~/.config/spicetify/Themes/Matugen/color.ini'
 post_hook = 'command -v spicetify >/dev/null && pgrep -x spotify >/dev/null && spicetify refresh -s >/dev/null 2>&1 &'
+
+[templates.sddm]
+input_path = '~/.config/matugen/templates/sddm-rice.conf'
+output_path = '~/.config/sddm-rice/rice.conf'
+
+[templates.starship]
+input_path = '~/.config/matugen/templates/starship.toml'
+output_path = '~/.config/starship.toml'
+
+[templates.startpage]
+input_path = '~/.config/matugen/templates/startpage-colors.css'
+output_path = '~/.config/startpage/colors.css'

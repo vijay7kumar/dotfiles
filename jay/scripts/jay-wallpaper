@@ -232,6 +232,9 @@ else
 fi
 info "Matugen updated"
 
+# Keep the SDDM login screen in sync (no-op until sddm-setup.sh has been run)
+"$HOME/.config/hypr/scripts/sddm-sync.sh" "$(cat "$CACHE_FILE")" &
+
 # Update Quickshell theme
 qs ipc call theme-manager reload
 info "Quickshell Theme updated"
